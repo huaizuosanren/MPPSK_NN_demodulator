@@ -1,0 +1,73 @@
+            
+%% Get the argument to sin/cos functions phase=0 ÏàÎ»Îª0
+            trigarg_rcv = ((carrFreq_rcv * 2.0 * pi) .* time_rcv);
+            
+            % Finally compute the signal to mix the collected data to bandband
+          %  data_0 =zeros(1,blksize_rcv,'int8');
+            Am=sqrt(2);
+            
+            data_0 =Am* sin(trigarg_rcv(1:blksize_rcv));
+            
+  %--- Find time constants --------------------------------------------------
+ts = 1/settings.samplingFreq;   % Sampling period in sec
+tc = 1/settings.codeFreqBasis;  % C/A chip period in sec
+    %--- Generate CA code for given PRN -----------------------------------
+  % PRN=25;
+ %   caCode = generateCAcode(PRN);
+ 
+    %=== Digitizing =======================================================
+    
+    %--- Make index array to read C/A code values -------------------------
+    % The length of the index array depends on the sampling frequency -
+    % number of samples per millisecond (because one C/A code period is one
+    % millisecond).
+    %codeValueIndex = ceil((ts * (1:samplesPerCode)) / tc);
+    
+    %--- Correct the last index (due to number rounding issues) -----------
+    %codeValueIndex(end) = 1023;
+    
+    %--- Make the digitized version of the C/A code -----------------------
+    % The "upsampled" code is made by selecting values form the CA code
+    % chip array (caCode) for the time instances of each sample.
+
+    %caCodeForSamples(:) = caCode(codeValueIndex);
+
+    %multiple cacode and the carrier to generate the input--------------
+           % samplesPerChip0=round(settings.samplingFreq/settings.codeFreqBasis);
+           % samplesPerChip1=samplesPerChip0-1;
+           %data_1=zeros(1,blksize_rcv,'int8');
+            
+           % for i=1:time
+            %    data_1(((i-1)*samplesPerCode+1):(i*samplesPerCode))=data_0(((i-1)*samplesPerCode+1):(i*samplesPerCode)).*caCodeForSamples;
+                      
+            %end
+  
+
+       % probe message bit signals------------------------------------------------
+        %data=zeros(1,blksize_rcv,'int8');
+          %%     make a 62000*time signals
+       k(1:(time/20))=1+round(3*rand(1,(time/20)));
+          for j=1:(time/20)
+                  if k(j)==1
+                       data(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+5*samplesPerCode))= -data_0(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+5*samplesPerCode));   %M=4,[0,5T)
+                       data(((j-1)*20*samplesPerCode+5*samplesPerCode+1):(j*20*samplesPerCode)) = data_0(((j-1)*20*samplesPerCode+5*samplesPerCode+1):(j*20*samplesPerCode));   %(5T,20T)
+                       
+                  elseif k(j)==2
+                    data(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+5*samplesPerCode))= data_0(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+5*samplesPerCode)); %[0,5T)
+                    data(((j-1)*20*samplesPerCode+5*samplesPerCode+1):((j-1)*20*samplesPerCode+10*samplesPerCode))= -data_0(((j-1)*20*samplesPerCode+5*samplesPerCode+1):((j-1)*20*samplesPerCode+10*samplesPerCode)); %[5T,10T)
+                    data(((j-1)*20*samplesPerCode+10*samplesPerCode+1):(j*20*samplesPerCode))=  data_0(((j-1)*20*samplesPerCode+10*samplesPerCode+1):(j*20*samplesPerCode));    %[10T,20T)
+                    
+                  elseif k(j)==3
+                    data(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+10*samplesPerCode))= data_0(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+10*samplesPerCode));  %[0,10T)
+                    data(((j-1)*20*samplesPerCode+10*samplesPerCode+1):((j-1)*20*samplesPerCode+15*samplesPerCode))= -data_0(((j-1)*20*samplesPerCode+10*samplesPerCode+1):((j-1)*20*samplesPerCode+15*samplesPerCode));  %[10T,15T)
+                    data(((j-1)*20*samplesPerCode+15*samplesPerCode+1):(j*20*samplesPerCode))= data_0(((j-1)*20*samplesPerCode+15*samplesPerCode+1):(j*20*samplesPerCode));  %[15T,20T)
+                    
+                  elseif k(j)==4
+                    data(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+15*samplesPerCode))=data_0(((j-1)*20*samplesPerCode+1):((j-1)*20*samplesPerCode+15*samplesPerCode));  %[0,15T)
+                    data(((j-1)*20*samplesPerCode+15*samplesPerCode+1):(j*20*samplesPerCode))=-data_0(((j-1)*20*samplesPerCode+15*samplesPerCode+1):(j*20*samplesPerCode));  %[15T,20T)
+                  end
+          end            
+       
+           
+          %add Gaussian noise
+         % data=awgn(data,1.5*10^(-5),'measured');  %-25,
